@@ -36,7 +36,7 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node test/smoke.mjs",
+    "test": "node test/smoke.mjs && node test/client-smoke.mjs",
     "check": "bash scripts/pre-release-check.sh"
   },
   "repository": {

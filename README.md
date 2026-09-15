@@ -78,11 +78,13 @@ dsh plugin --profile <profile> add dsh-followup-todo
 ## 开发与自测
 
 ```sh
-npm test     # 宿主半边冒烟测试：36 项，覆盖工具生命周期 / 排序 / 归档 / 5 个 HTTP 端点 / 并发写入
+npm test     # 冒烟测试，50 项：宿主 36（工具生命周期/排序/归档/5 个 HTTP 端点/并发写入）+ 浏览器 14（加载/导出/插槽注册/样式注入）
 npm run check # 发布前自检：占位符、凭据、硬编码路径、bundle 清单、重复路由、语法
 ```
 
 `npm test` 全程隔离：它会把 `HOME` 重定向到一个仓库内的临时目录，所以插件写的 `~/.dsh` 数据文件留在仓库里，**不会碰你真实的待办数据**。测试需要 `@deepseek-ai/dsh-tools` 可解析 —— 装了 dsh 的环境里直接可跑；独立 clone 的话先 `npm i -D @deepseek-ai/dsh-tools`。
+
+浏览器半边用 `window.__ModuleLoader__` 桩加载，拦的是"加载不进来 / 导出不对 / 插槽名写错"这类硬故障；**它不渲染组件、不跑 hooks，不能替代真机页面验证**。上线前建议在本地 dsh 里实装一次，看一眼头部按钮和卡片带确实出现。
 
 ## License
 
