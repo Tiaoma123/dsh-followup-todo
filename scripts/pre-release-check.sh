@@ -10,12 +10,11 @@ ok()   { printf '  ✅ %s\n' "$*"; }
 bad()  { printf '  ❌ %s\n' "$*"; fail=1; }
 
 say "== 1. 占位符是否已替换 =="
-# 排除本脚本自身：它必须包含这些字面量才能检查它们
-if grep -rn "YOUR-GITHUB-USERNAME\|YOUR NAME" . --exclude-dir=.git --exclude-dir=node_modules \
-     --exclude="$(basename "$0")" >/dev/null 2>&1; then
+# 排除本脚本与发布清单：这两个文件必须包含这些字面量才能讲解它们
+EXCL=(--exclude-dir=.git --exclude-dir=node_modules --exclude="$(basename "$0")" --exclude=RELEASE-CHECKLIST.md)
+if grep -rn "YOUR-GITHUB-USERNAME\|YOUR NAME" . "${EXCL[@]}" >/dev/null 2>&1; then
   bad "仍有未替换的占位符："
-  grep -rn "YOUR-GITHUB-USERNAME\|YOUR NAME" . --exclude-dir=.git --exclude-dir=node_modules \
-     --exclude="$(basename "$0")" | sed 's/^/     /'
+  grep -rn "YOUR-GITHUB-USERNAME\|YOUR NAME" . "${EXCL[@]}" | sed 's/^/     /'
 else
   ok "无占位符残留"
 fi
