@@ -1,0 +1,24 @@
+# Dependencies / build output
+node_modules/
+dist/
+*.tgz
+
+# Smoke-test throwaway HOME (test/smoke.mjs)
+.smoke-home-*/
+.test-home/
+.test-env/
+
+# Local runtime state — never commit todo data
+*.local.json
+followup-todos-*.json
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
