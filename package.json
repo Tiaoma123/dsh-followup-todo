@@ -1,0 +1,54 @@
+{
+  "name": "dsh-followup-todo",
+  "version": "0.1.0",
+  "description": "DSH plugin: a cross-session follow-up todo list for the human. The agent records items you asked to handle later via todo_add/todo_list/todo_done/todo_archive, each carrying P0-P3 priority plus a structured handoff (context + inject) so a brand-new session can pick it up without re-reading the old conversation. Host persists to ~/.dsh/followup-todos-<workspace>.json and serves /followup-todos HTTP routes for the browser half.",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/smoke.mjs",
+    "check": "bash scripts/pre-release-check.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR-GITHUB-USERNAME/dsh-followup-todo.git"
+  },
+  "homepage": "https://github.com/YOUR-GITHUB-USERNAME/dsh-followup-todo",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "todo",
+    "task-management"
+  ]
+}

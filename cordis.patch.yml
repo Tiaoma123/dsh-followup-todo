@@ -1,0 +1,25 @@
+# dsh-followup-todo bundle patch
+#
+# This file is the `dsh.bundle.patch` layer of the package. When the plugin is
+# installed through the official CLI —
+#
+#   dsh plugin --profile <name> add dsh-followup-todo
+#
+# — the command reconciles `dsh.profile.bundles` against installed packages and,
+# seeing this declaration, appends the package to the bundle stack. Profile boot
+# then merges THIS patch (a single `insert` of the plugin row) into the
+# composition.
+#
+# ONE MOUNT ONLY. The host half mounts process-wide and registers the todo_*
+# tools plus the /followup-todos HTTP prefix; the browser half is served from
+# this same package (declared by `dsh.client` in package.json) and registers the
+# header button, the floating panel and the composer-adjacent notes strip.
+#
+# Do NOT add a second manual mount line for this plugin in the profile's own
+# cordis.patch.yml, and do NOT keep the older two-package mount
+# (@anoslide/dsh-host-followup-todo + @anoslide/dsh-client-followup-todo)
+# alongside this one — the prefix route would be registered twice and the whole
+# plugin tree fails at boot with "duplicate prefix route" / "duplicate route".
+- insert:
+    - id: followup-todo
+      name: 'dsh-followup-todo'
