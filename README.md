@@ -31,11 +31,19 @@
 
 ## 安装
 
+**从 npm 装**（一条命令）：
+
 ```sh
 dsh plugin --profile <profile> add dsh-followup-todo
 ```
 
-> ⚠️ **只挂一次。** 本包通过 `cordis.patch.yml` 自挂载（`dsh.bundle.patch`）。如果你的 profile 里还留着旧的双包挂载（`@anoslide/dsh-host-followup-todo` + `@anoslide/dsh-client-followup-todo`），**必须先删掉**。两个挂载都会注册 `/followup-todos` 前缀路由，同时存在会让整个插件树在启动时报「duplicate prefix route」而挂掉。
+**直接从 GitHub 装**（不经 npm）：
+
+```sh
+dsh plugin --profile <profile> add github:Tiaoma123/dsh-followup-todo
+```
+
+> ⚠️ **只挂一次。** 本包通过 `cordis.patch.yml` 自挂载（`dsh.bundle.patch`），一个包同时提供宿主半边与浏览器半边，装完即用，**不需要在 profile 里再手写挂载行**。**同一个插件不要重复挂载** —— 重复挂载会注册两次 `/followup-todos` 前缀路由，整个插件树会在启动时报「duplicate prefix route」而挂掉。如果你之前手动挂过这个插件的其它形态（例如更早的双包版本），**先删掉旧的那条**再装。
 
 ## 模型工具
 
