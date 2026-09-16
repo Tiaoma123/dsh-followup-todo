@@ -50,9 +50,9 @@ dsh plugin --profile <profile> add dsh-followup-todo
 
 ## 浏览器端
 
-- **会话头部按钮** —— 显示未完成数量的角标，点开是悬浮面板。
-- **悬浮面板** —— 新增/勾选/归档/删除，P0–P3 优先级选择，归档视图切换。
-- **输入框上方卡片带** —— 未完成待办铺成一行卡片，点一张就把它的 prompt 填进输入框，直接接着干。
+- **会话头部按钮** —— 显示未完成数量的角标，点开是悬浮面板（挂在 `conversation.session.header.utilities`，打开会话后才出现）。
+- **悬浮面板** —— 新增 / 勾选 / 归档 / 删除，P0–P3 优先级选择，四个过滤页签（未完成 / 已完成 / 已归档 / 全部）。
+- **输入框上方待办条** —— 挂在 `conversation.input.dock`，折叠时只显示一行「Todos · click to fill the composer」加数量，展开后列出条目；点一条就把它的交接 prompt 填进输入框，直接接着干。待办为空时整条不渲染。
 
 ## 数据存储
 
@@ -66,9 +66,12 @@ dsh plugin --profile <profile> add dsh-followup-todo
 
 ## 已知限制与安全说明
 
-- **HTTP 接口没有鉴权。** `/followup-todos/*` 由 dsh 的 webServer 注册，任何能访问到该 web 服务端口的客户端都能读写任意工作区的待办（`ws` 参数直接取自 query，文件名经过 base64 编码，因此不存在路径穿越）。默认监听 `127.0.0.1` 时没问题；**如果你把 dsh web 暴露到非回环地址，请自行加一层访问控制。**
-- **`todo_add` 不接受 `workspace` 参数**，另外三个工具接受。这是历史遗留的不一致，会在后续版本统一。
-- 面板列表靠 2 秒轮询刷新，不是实时推送；多窗口同时打开时可能有短暂的显示延迟。
+- **HTTP 接口做浏览器鉴权。** `/followup-todos/*` 由 dsh 的 webServer 注册，路由入口先调用 `connection.requestRejection(req)`：未通过鉴权的请求直接返回 401 / 403，不进入任何读写逻辑。已实测：不带会话凭据的裸请求被拒（`401 unauthorized`），浏览器内的同源请求正常通过。
+  - `connection` 服务缺席时（老版本 DSH）退化为不拦截，此时任何能访问到该端口的客户端都能读写任意工作区的待办。默认监听 `127.0.0.1` 时风险有限；**如果你把 dsh web 暴露到非回环地址，请自行再加一层访问控制。**
+  - `ws` 参数直接取自 query，但文件名经过 base64url 编码，因此不存在路径穿越。
+- 列表靠 3 秒轮询刷新（一个全局轮询覆盖所有已登记的工作区分片），不是实时推送；多窗口同时打开时可能有短暂的显示延迟。
+- 界面文案走 dsh 的 locale 服务，内置中英两套字典，跟随客户端语言切换。
+- **头部按钮**挂在 `conversation.session.header.utilities`，只在已打开的会话里渲染；空白新会话首页看不到它，这是插槽本身的行为。**输入框上方的待办条**挂在 `conversation.input.dock`，待办为空时不渲染。
 - 仅实现了 web 端界面。headless profile 里工具可用，但没有 UI。
 
 ## 维护状态
@@ -78,13 +81,13 @@ dsh plugin --profile <profile> add dsh-followup-todo
 ## 开发与自测
 
 ```sh
-npm test     # 冒烟测试，50 项：宿主 36（工具生命周期/排序/归档/5 个 HTTP 端点/并发写入）+ 浏览器 14（加载/导出/插槽注册/样式注入）
+npm test     # 冒烟测试，57 项：宿主 42（工具生命周期/排序/归档/5 个 HTTP 端点/并发写入/浏览器鉴权）+ 浏览器 15（加载/导出/插槽注册/i18n 字典/样式注入）
 npm run check # 发布前自检：占位符、凭据、硬编码路径、bundle 清单、重复路由、语法
 ```
 
 `npm test` 全程隔离：它会把 `HOME` 重定向到一个仓库内的临时目录，所以插件写的 `~/.dsh` 数据文件留在仓库里，**不会碰你真实的待办数据**。测试需要 `@deepseek-ai/dsh-tools` 可解析 —— 装了 dsh 的环境里直接可跑；独立 clone 的话先 `npm i -D @deepseek-ai/dsh-tools`。
 
-浏览器半边用 `window.__ModuleLoader__` 桩加载，拦的是"加载不进来 / 导出不对 / 插槽名写错"这类硬故障；**它不渲染组件、不跑 hooks，不能替代真机页面验证**。上线前建议在本地 dsh 里实装一次，看一眼头部按钮和卡片带确实出现。
+浏览器半边用 `window.__ModuleLoader__` 桩加载，拦的是"加载不进来 / 导出不对 / 插槽名写错"这类硬故障；**它不渲染组件、不跑 hooks**。真机渲染已在隔离 profile 的 dsh 实例上用 Chromium 实测过：待办条在输入框上方出现、数字角标正确、i18n 跟随语言、无控制台错误；未覆盖的是头部按钮（`conversation.session.header.utilities` 在空白新会话下不渲染，需要打开一个真实会话才能看到）。
 
 ## License
 

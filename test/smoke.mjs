@@ -404,6 +404,89 @@ await t("10 条并发 add 全部落盘", async () => {
   assert.equal(items.length, 10, "期望 10 条，实际 " + items.length);
 });
 
+console.log("\n== 8. 浏览器鉴权 ==");
+
+/**
+ * 另起一个带 connection 服务的 mock ctx：鉴权发生在 apply(ctx) 闭包内，
+ * 必须重新 apply 才能拿到带鉴权的 handler。
+ */
+function makeCtxWithConnection(connection) {
+  const t2 = new Map();
+  const r2 = [];
+  const c = {
+    effect(fn) {
+      return fn();
+    },
+    tools: {
+      register(tool) {
+        t2.set(tool.name, tool);
+      }
+    },
+    webServer: {
+      register(route) {
+        r2.push(route);
+      }
+    },
+    get(name) {
+      return name === "connection" ? connection : undefined;
+    }
+  };
+  mod.apply(c);
+  return r2[0].handler;
+}
+
+await t("connection 服务缺席时放行（保持旧行为）", async () => {
+  const h = makeCtxWithConnection(undefined);
+  const res = fakeRes();
+  await h(fakeReq("GET", q("/followup-todos/list", WS_B)), res);
+  assert.equal(res.code, 200);
+});
+
+await t("requestRejection 返回 undefined 时放行", async () => {
+  const h = makeCtxWithConnection({ requestRejection: () => undefined });
+  const res = fakeRes();
+  await h(fakeReq("GET", q("/followup-todos/list", WS_B)), res);
+  assert.equal(res.code, 200);
+});
+
+await t("401 时拒绝并返回 unauthorized", async () => {
+  const h = makeCtxWithConnection({ requestRejection: () => 401 });
+  const res = fakeRes();
+  await h(fakeReq("GET", q("/followup-todos/list", WS_B)), res);
+  assert.equal(res.code, 401);
+  assert.equal(res.raw, "unauthorized");
+});
+
+await t("403 时拒绝并返回 forbidden", async () => {
+  const h = makeCtxWithConnection({ requestRejection: () => 403 });
+  const res = fakeRes();
+  await h(fakeReq("POST", q("/followup-todos/add", WS_B), { title: "不该被写入" }), res);
+  assert.equal(res.code, 403);
+  assert.equal(res.raw, "forbidden");
+});
+
+await t("鉴权失败时路由逻辑不执行（没写入任何数据）", async () => {
+  const ws = "/smoke/auth-guard";
+  const h = makeCtxWithConnection({ requestRejection: () => 401 });
+  const res = fakeRes();
+  await h(fakeReq("POST", q("/followup-todos/add", ws), { title: "不该被写入" }), res);
+  assert.equal(res.code, 401);
+  const list = fakeRes();
+  await handler(fakeReq("GET", q("/followup-todos/list", ws)), list);
+  assert.equal(list.json.items.length, 0, "鉴权失败却写入了数据");
+});
+
+await t("requestRejection 抛错时放行（不因鉴权异常把功能锁死）", async () => {
+  const h = makeCtxWithConnection({
+    requestRejection: () => {
+      throw new Error("boom");
+    }
+  });
+  const res = fakeRes();
+  await h(fakeReq("GET", q("/followup-todos/list", WS_B)), res);
+  assert.equal(res.code, 200);
+});
+
 // ── 收尾 ───────────────────────────────────────────────────────────────────
 await rm(fakeHome, { recursive: true, force: true });
 

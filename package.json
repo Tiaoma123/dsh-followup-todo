@@ -1,6 +1,6 @@
 {
   "name": "dsh-followup-todo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH plugin: a cross-session follow-up todo list for the human. The agent records items you asked to handle later via todo_add/todo_list/todo_done/todo_archive, each carrying P0-P3 priority plus a structured handoff (context + inject) so a brand-new session can pick it up without re-reading the old conversation. Host persists to ~/.dsh/followup-todos-<workspace>.json and serves /followup-todos HTTP routes for the browser half.",
   "license": "MIT",
   "type": "module",
@@ -22,10 +22,7 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-theme"
-      ],
+      "inject": [],
       "platform": "web"
     }
   },
